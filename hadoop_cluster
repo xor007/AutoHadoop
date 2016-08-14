@@ -91,9 +91,9 @@ deploy_hadoop()
   echo 'press enter to continue...'; read ta
 	(sudo docker exec -i mr wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' $jdk_link -O $jdk_file) && (	sudo docker exec -i mr tar -zxvpf $jdk_file -C /usr/local) && (sudo docker exec -i mr  ln -s /usr/local/$jdk_dir /usr/local/java ) && ( sudo docker exec -i mr rm $jdk_file)
   echo 'press enter to continue...'; read ta
-	( sudo docker exec -i mr wget $hadoop_link -O $hadoop_file) && ( 	sudo docker exec -i mr  tar -zxvpf $hadoop_file -C /usr/local ) && (sudo docker exec -i mr  ln -s /usr/local/hadoop-$hadoop_verson /usr/local/hadoop ) && ( 	sudo docker exec -i mr  rm $hadoop_file )
+	( sudo docker exec -i mr wget $hadoop_link -O $hadoop_file) && ( 	sudo docker exec -i mr  tar -zxvpf $hadoop_file -C /usr/local ) && (sudo docker exec -i mr  ln -s /usr/local/hadoop-$hadoop_version /usr/local/hadoop ) && ( 	sudo docker exec -i mr  rm $hadoop_file )
   echo 'press enter to continue...'; read ta
-	( sudo docker exec -i mr chown -R student:hadoop /usr/local/hadoop-$hadoop_verson) && ( 	sudo docker exec -i mr chmod -R ug+rw /usr/local/hadoop-$hadoop_verson )
+	( sudo docker exec -i mr chown -R student:hadoop /usr/local/hadoop-$hadoop_version) && ( 	sudo docker exec -i mr chmod -R ug+rw /usr/local/hadoop-$hadoop_version )
   echo 'press enter to continue...'; read ta
 
 	( sudo docker exec -u student -i mr sh -c "echo 'export JAVA_HOME=/usr/local/java' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export PATH=\$JAVA_HOME/bin:\$PATH' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export HADOOP_HOME=/usr/local/hadoop' >>/home/student/.bashrc" )
@@ -138,7 +138,7 @@ EOF
 	echo '###setting up passwordless authentication between nodes...'
 	echo 'generating ssh keys in host...'
   echo 'press enter to continue...'; read ta
-  #ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+  ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
   echo 'press enter to continue...'; read ta
 	echo 'generating ssh keys in master node...'
   sudo docker exec -u student -i mr sh -c "ssh-keygen -t rsa -N '' -f /home/student/.ssh/id_rsa"
@@ -289,6 +289,7 @@ done
 
   echo 'masters and slaves...'
   cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/masters"
+localhost
 mr
 EOF
   cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/slaves"
@@ -301,7 +302,7 @@ EOF
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/bin/hdfs namenode -format"
 
 
-	echo 'restricting the RAM usage...'
+  echo 'restricting the RAM usage...'
 }
 
 check_cluster()
@@ -312,16 +313,16 @@ check_cluster()
 
 start_cluster()
 {
-	echo 'starting master processes...'
+  echo 'starting master processes...'
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-dfs.sh"
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-yarn.sh"
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver"
   sudo docker exec -u student -i mr bash -l -c "jps"
 }
 
-stop_luster()
+stop_cluster()
 {
-	echo 'stoping processes...'
+  echo 'stoping processes...'
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop-2.7.2/sbin/stop-all.sh"
 }
 
@@ -337,5 +338,5 @@ destroy_cluster()
 
 #setup_docker
 #setup_hadoop_cluster
-
+stop_cluster
 start_cluster
