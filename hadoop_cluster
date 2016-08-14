@@ -87,7 +87,7 @@ deploy_hadoop()
 	echo -e "$pass\n$pass" | sudo docker exec -i mr passwd student
 
 	echo 'installing java jdk and hadoop in master node as user student...'
-	(sudo docker exec -i mr apt-get update) && 	(sudo docker exec -i mr apt-get install wget)
+	(sudo docker exec -i mr apt-get update) && (sudo docker exec -i mr apt-get install wget) && (sudo docker exec -i mr apt-get install python)
   echo 'press enter to continue...'; read ta
 	(sudo docker exec -i mr wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' $jdk_link -O $jdk_file) && (	sudo docker exec -i mr tar -zxvpf $jdk_file -C /usr/local) && (sudo docker exec -i mr  ln -s /usr/local/$jdk_dir /usr/local/java ) && ( sudo docker exec -i mr rm $jdk_file)
   echo 'press enter to continue...'; read ta
