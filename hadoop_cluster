@@ -83,7 +83,7 @@ deploy_hadoop()
 	fi
 	echo -e "$pass\n$pass" | sudo docker exec -i mr passwd
 	sudo docker exec -i mr groupadd hadoop
-	sudo docker exec -i mr useradd -m -g hadoop student
+	sudo docker exec -i mr useradd -m -s /bin/bash -g hadoop student
 	echo -e "$pass\n$pass" | sudo docker exec -i mr passwd student
 
 	echo 'installing java jdk and hadoop in master node as user student...'
