@@ -100,7 +100,7 @@ deploy_hadoop()
   echo 'press enter to continue...'; read ta
 	( sudo docker exec -u student -i mr sh -c "echo 'export PATH=\$HADOOP_HOME/bin:\$PATH' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop' >>/home/student/.bashrc" )
 ( sudo docker exec -i mr sh -c "echo 'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true' >>/home/student/.bashrc" )
-
+( sudo docker exec -i mr sh -c "echo 'export HADOOP_CLASSPATH=\${JAVA_HOME}/lib/tools.jar' >>/home/student/.bashrc" )
 
 }
 
