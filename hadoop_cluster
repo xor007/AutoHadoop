@@ -313,6 +313,11 @@ check_cluster()
 
 start_cluster()
 {
+  echo 'starting instances...'
+  sudo docker start mr
+  for num in {1..3}; do
+    sudo docker start slv$num
+  done
   echo 'starting master processes...'
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-dfs.sh"
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-yarn.sh"
@@ -324,6 +329,11 @@ stop_cluster()
 {
   echo 'stoping processes...'
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop-2.7.2/sbin/stop-all.sh"
+  echo 'stoping instances...'
+  sudo docker stop mr
+  for num in {1..3}; do
+    sudo docker stop slv$num
+  done
 }
 
 destroy_cluster()
