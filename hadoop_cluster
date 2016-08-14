@@ -333,10 +333,25 @@ destroy_cluster()
   sudo docker network rm hadoop-net
 }
 
-#check_internet
-#destroy_cluster
-
-#setup_docker
-#setup_hadoop_cluster
-stop_cluster
-start_cluster
+case "$1" in
+  start)
+    start_cluster
+    ;;
+  stop)
+    stop_cluster
+    ;;
+  uninstall)
+    destroy_cluster
+    ;;
+install)
+    #check_internet
+    setup_docker
+    setup_hadoop_cluster
+    ;;
+  retart)
+    stop_cluster
+    start_cluster
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|install|uninstall}"
+esac
