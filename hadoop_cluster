@@ -198,7 +198,7 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
     <value>yarn</value>
   </property>
 
-  <property>
+  <!--property>
     <name>mapreduce.map.memory.mb</name>
     <value>256</value>
   </property>
@@ -216,7 +216,7 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
   <property>
    <name>mapreduce.reduce.java.opts</name>
    <value>-Xmx384m</value>
-  </property>
+  </property-->
 
 </configuration>
 EOF
@@ -235,13 +235,13 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
     <name>yarn.resourcemanager.hostname</name>
     <value>mr</value>
   </property>
-  <property>
+  <!--property>
     <name>yarn.nodemanager.resource.memory-mb</name>
     <value>1024</value>
   </property>
   <property>
    <name>yarn.scheduler.minimum-allocation-mb</name>
-   <value>256</value>
+   <value>256</value-->
   </property>
 </configuration>
 EOF
