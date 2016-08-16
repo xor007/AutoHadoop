@@ -241,8 +241,8 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
   </property>
   <property>
    <name>yarn.scheduler.minimum-allocation-mb</name>
-   <value>256</value-->
-  </property>
+   <value>256</value>
+  </property-->
 </configuration>
 EOF
 
