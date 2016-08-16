@@ -328,6 +328,7 @@ start_cluster()
 stop_cluster()
 {
   echo 'stoping processes...'
+  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver"
   sudo docker exec -u student -i mr bash -c "/usr/local/hadoop-2.7.2/sbin/stop-all.sh"
   echo 'stoping instances...'
   sudo docker stop mr
