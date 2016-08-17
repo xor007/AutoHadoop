@@ -24,6 +24,26 @@ jdk_file=jdk-$jdk_version-linux-x64.tar.gz
 jdk_link=http://download.oracle.com/otn-pub/java/jdk/$jdk_version-b13/$jdk_file
 
 
+get_string()
+{
+	name=$1
+	default=$2
+	echo "Enter $name, then press enter [$default]:" >&2
+	read value
+	if [[ "$value" == "" ]]; then
+		value=$default
+	fi
+	echo $value
+	
+}
+
+
+ip_prefix=$(get_string "ip_prefix" "192.168.7")
+master_name=$(get_string "master_prefix" "mr")
+slave_name=$(get_string "slave_prefix" "slv")
+user_name=$(get_string "user_name" "student")
+
+
 check_internet()
 {
 	wget -O - http://github.com | grep html && echo 'Internet connection detected!' || ( echo 'NO Internet connection! Exiting...'; kill 0 )
@@ -65,15 +85,15 @@ deploy_hadoop()
 
 	
 	echo "Creating master hadoop node from $thin_img image..."
-	sudo docker create --name mr \
+	sudo docker create --name $master_name \
 	--net hadoop-net \
 	--ip $ip_prefix.253 \
-	--hostname mr \
-	--add-host slv1:$ip_prefix.11 \
-	--add-host slv2:$ip_prefix.12 \
-	--add-host slv3:$ip_prefix.13 \
+	--hostname $master_name \
+	--add-host $slave_name"1":$ip_prefix.11 \
+	--add-host $slave_name"2":$ip_prefix.12 \
+	--add-host $slave_name"3":$ip_prefix.13 \
 	$thin_img
-	sudo docker start mr
+	sudo docker start $master_name
 
 	echo 'Please enter root password for your cluster nodes [2016w1+Z]'
 	read pass
@@ -81,26 +101,26 @@ deploy_hadoop()
 	then
 		pass="2016w1+Z"
 	fi
-	echo -e "$pass\n$pass" | sudo docker exec -i mr passwd
-	sudo docker exec -i mr groupadd hadoop
-	sudo docker exec -i mr useradd -m -s /bin/bash -g hadoop student
-	echo -e "$pass\n$pass" | sudo docker exec -i mr passwd student
+	echo -e "$pass\n$pass" | sudo docker exec -i $master_name passwd
+	sudo docker exec -i $master_name groupadd hadoop
+	sudo docker exec -i $master_name useradd -m -s /bin/bash -g hadoop $user_name
+	echo -e "$pass\n$pass" | sudo docker exec -i $master_name passwd $user_name
 
-	echo 'installing java jdk and hadoop in master node as user student...'
-	(sudo docker exec -i mr apt-get update) && (sudo docker exec -i mr apt-get install wget) && (sudo docker exec -i mr apt-get install python)
+	echo "installing java jdk and hadoop in master node as user $user_name..."
+	(sudo docker exec -i $master_name apt-get update) && (sudo docker exec -i $master_name apt-get -y install wget) && (sudo docker exec -i $master_name apt-get -y install python)
   echo 'press enter to continue...'; read ta
-	(sudo docker exec -i mr wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' $jdk_link -O $jdk_file) && (	sudo docker exec -i mr tar -zxvpf $jdk_file -C /usr/local) && (sudo docker exec -i mr  ln -s /usr/local/$jdk_dir /usr/local/java ) && ( sudo docker exec -i mr rm $jdk_file)
+	(sudo docker exec -i $master_name wget --no-cookies --no-check-certificate --header 'Cookie: oraclelicense=accept-securebackup-cookie' $jdk_link -O $jdk_file) && (	sudo docker exec -i $master_name tar -zxvpf $jdk_file -C /usr/local) && (sudo docker exec -i $master_name  ln -s /usr/local/$jdk_dir /usr/local/java ) && ( sudo docker exec -i $master_name rm $jdk_file)
   echo 'press enter to continue...'; read ta
-	( sudo docker exec -i mr wget $hadoop_link -O $hadoop_file) && ( 	sudo docker exec -i mr  tar -zxvpf $hadoop_file -C /usr/local ) && (sudo docker exec -i mr  ln -s /usr/local/hadoop-$hadoop_version /usr/local/hadoop ) && ( 	sudo docker exec -i mr  rm $hadoop_file )
+	( sudo docker exec -i $master_name wget $hadoop_link -O $hadoop_file) && ( 	sudo docker exec -i $master_name  tar -zxvpf $hadoop_file -C /usr/local ) && (sudo docker exec -i $master_name  ln -s /usr/local/hadoop-$hadoop_version /usr/local/hadoop ) && ( 	sudo docker exec -i $master_name  rm $hadoop_file )
   echo 'press enter to continue...'; read ta
-	( sudo docker exec -i mr chown -R student:hadoop /usr/local/hadoop-$hadoop_version) && ( 	sudo docker exec -i mr chmod -R ug+rw /usr/local/hadoop-$hadoop_version )
+	( sudo docker exec -i $master_name chown -R $user_name:hadoop /usr/local/hadoop-$hadoop_version) && ( 	sudo docker exec -i $master_name chmod -R ug+rw /usr/local/hadoop-$hadoop_version )
   echo 'press enter to continue...'; read ta
 
-	( sudo docker exec -u student -i mr sh -c "echo 'export JAVA_HOME=/usr/local/java' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export PATH=\$JAVA_HOME/bin:\$PATH' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export HADOOP_HOME=/usr/local/hadoop' >>/home/student/.bashrc" )
+	( sudo docker exec -u $user_name -i $master_name sh -c "echo 'export JAVA_HOME=/usr/local/java' >>/home/$user_name/.bashrc" ) && ( sudo docker exec -i $master_name sh -c "echo 'export PATH=\$JAVA_HOME/bin:\$PATH' >>/home/$user_name/.bashrc" ) && ( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_HOME=/usr/local/hadoop' >>/home/$user_name/.bashrc" )
   echo 'press enter to continue...'; read ta
-	( sudo docker exec -u student -i mr sh -c "echo 'export PATH=\$HADOOP_HOME/bin:\$PATH' >>/home/student/.bashrc" ) && ( sudo docker exec -i mr sh -c "echo 'export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop' >>/home/student/.bashrc" )
-( sudo docker exec -i mr sh -c "echo 'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true' >>/home/student/.bashrc" )
-( sudo docker exec -i mr sh -c "echo 'export HADOOP_CLASSPATH=\${JAVA_HOME}/lib/tools.jar' >>/home/student/.bashrc" )
+	( sudo docker exec -u $user_name -i $master_name sh -c "echo 'export PATH=\$HADOOP_HOME/bin:\$PATH' >>/home/$user_name/.bashrc" ) && ( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop' >>/home/$user_name/.bashrc" )
+( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true' >>/home/$user_name/.bashrc" )
+( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_CLASSPATH=\${JAVA_HOME}/lib/tools.jar' >>/home/$user_name/.bashrc" )
 
 }
 
@@ -108,31 +128,31 @@ enable_ssh_server_in_node()
 {
 	echo "enabling ssh server in node..."
   echo 'press enter to continue...'; read ta
-  sudo docker exec -i mr /etc/my_init.d/00_regen_ssh_host_keys.sh
-  sudo docker exec -i mr rm -f /etc/service/sshd/down
-  sudo docker stop mr
-  sudo docker start mr
+  sudo docker exec -i $master_name /etc/my_init.d/00_regen_ssh_host_keys.sh
+  sudo docker exec -i $master_name rm -f /etc/service/sshd/down
+  sudo docker stop $master_name
+  sudo docker start $master_name
 }
 
 config_passwordless_ssh()
 {
 	echo "configuring ssh client in host..."
   echo 'press enter to continue...'; read ta
-  cat <<EOF >>~/.ssh/config
+  cat <<EOF | sed -e"s/slv/$slave_name/;" >>~/.ssh/config
 
 ## Hadoop cluster nodes
-Host mr
+Host $master_name
   Hostname $ip_prefix.253
-  User student
+  User $user_name
 Host slv1
   Hostname $ip_prefix.11
-  User student
+  User $user_name
 Host slv2
   Hostname $ip_prefix.12
-  User student
+  User $user_name
 Host slv3
   Hostname $ip_prefix.13
-  User student
+  User $user_name
 
 EOF
 	echo '###setting up passwordless authentication between nodes...'
@@ -141,28 +161,28 @@ EOF
   ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
   echo 'press enter to continue...'; read ta
 	echo 'generating ssh keys in master node...'
-  sudo docker exec -u student -i mr sh -c "ssh-keygen -t rsa -N '' -f /home/student/.ssh/id_rsa"
-  sudo docker exec -u student -i mr sh -c "cat /home/student/.ssh/id_rsa.pub >> /home/student/.ssh/authorized_keys"
-  cat ~/.ssh/id_rsa.pub | sudo docker exec -u student -i mr sh -c "cat - >> /home/student/.ssh/authorized_keys"
-  sudo docker exec -u student -i mr chmod 600 /home/student/.ssh/authorized_keys
+  sudo docker exec -u $user_name -i $master_name sh -c "ssh-keygen -t rsa -N '' -f /home/$user_name/.ssh/id_rsa"
+  sudo docker exec -u $user_name -i $master_name sh -c "cat /home/$user_name/.ssh/id_rsa.pub >> /home/$user_name/.ssh/authorized_keys"
+  cat ~/.ssh/id_rsa.pub | sudo docker exec -u $user_name -i $master_name sh -c "cat - >> /home/$user_name/.ssh/authorized_keys"
+  sudo docker exec -u $user_name -i $master_name chmod 600 /home/$user_name/.ssh/authorized_keys
 
   echo 'press enter to continue...'; read ta
 	echo "configuring ssh client in node..."
-cat <<EOF | sudo docker exec -u student -i mr sh -c 'cat - > /home/student/.ssh/config; chmod 600 /home/student/.ssh/config'
+cat <<EOF | sed -e"s/slv/$slave_name/;"  | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /home/$user_name/.ssh/config; chmod 600 /home/$user_name/.ssh/config"
 
 ## Hadoop cluster nodes
-Host mr
+Host $master_name
   Hostname $ip_prefix.253
-  User student
+  User $user_name
 Host slv1
   Hostname $ip_prefix.11
-  User student
+  User $user_name
 Host slv2
   Hostname $ip_prefix.12
-  User student
+  User $user_name
 Host slv3
   Hostname $ip_prefix.13
-  User student
+  User $user_name
 
 EOF
 
@@ -170,28 +190,28 @@ EOF
 
 setup_hadoop_cluster()
 {
-  #deploy_hadoop
-  #enable_ssh_server_in_node
-  #config_passwordless_ssh
+  deploy_hadoop
+  enable_ssh_server_in_node
+  config_passwordless_ssh
 	echo 'setting up hadoop node in master mode...'
   echo 'press enter to continue...'; read ta
 	#core-site.xml
-  sudo docker exec -u student -i mr sh -c "sed -i -E -e's~export\ JAVA_HOME.+$~export\ JAVA_HOME=/usr/local/java~;' /usr/local/hadoop/etc/hadoop/hadoop-env.sh"
-cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/core-site.xml"
+  sudo docker exec -u $user_name -i $master_name sh -c "sed -i -E -e's~export\ JAVA_HOME.+$~export\ JAVA_HOME=/usr/local/java~;' /usr/local/hadoop/etc/hadoop/hadoop-env.sh"
+cat <<EOF | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/core-site.xml"
 <configuration>
   <property>
     <name>fs.defaultFS</name>
-    <value>hdfs://mr:9000</value>
+    <value>hdfs://$master_name:9000</value>
   </property>
 </configuration>
 EOF
 
 	#mapred-site.xml
-cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/mapred-site.xml"
+cat <<EOF | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/mapred-site.xml"
 <configuration>
   <property>
     <name>mapreduce.jobtracker.address</name>
-    <value>mr:54311</value>
+    <value>$master_name:54311</value>
   </property>
   <property>
     <name>mapreduce.framework.name</name>
@@ -222,7 +242,7 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
 EOF
 
 	#yarn-site.xml
-cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/yarn-site.xml"
+cat <<EOF | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/yarn-site.xml"
 <configuration>
 
 <!-- Site specific YARN configuration properties -->
@@ -233,7 +253,7 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
   </property>
   <property>
     <name>yarn.resourcemanager.hostname</name>
-    <value>mr</value>
+    <value>$master_name</value>
   </property>
   <!--property>
     <name>yarn.nodemanager.resource.memory-mb</name>
@@ -248,17 +268,17 @@ EOF
 
   echo '### setting up slave nodes...'
   echo 'press enter to continue...'; read ta
-  sudo docker commit mr hadoop_base
-	sudo docker create --name slv1 --net hadoop-net --ip $ip_prefix.11 --hostname slv1	hadoop_base
-	sudo docker create --name slv2 --net hadoop-net --ip $ip_prefix.12 --hostname slv2	hadoop_base
-	sudo docker create --name slv3 --net hadoop-net --ip $ip_prefix.13 --hostname slv3	hadoop_base
+  sudo docker commit $master_name hadoop_base
+	sudo docker create --name $slave_name"1" --net hadoop-net --ip $ip_prefix.11 --hostname $slave_name"1"	hadoop_base
+	sudo docker create --name $slave_name"2" --net hadoop-net --ip $ip_prefix.12 --hostname $slave_name"2"	hadoop_base
+	sudo docker create --name $slave_name"3" --net hadoop-net --ip $ip_prefix.13 --hostname $slave_name"3"	hadoop_base
 
   for num in {1..3}; do
-    sudo docker start slv$num
+    sudo docker start $slave_name$num
   done
 
   echo 'setting up hdfs-site config...'
-cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/hdfs-site.xml"
+cat <<EOF | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/hdfs-site.xml"
 <configuration>
   <property>
     <name>dfs.replication</name>
@@ -270,9 +290,9 @@ cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/e
   </property>
 </configuration>
 EOF
-  sudo docker exec -u student -i mr sh -c "mkdir -p /usr/local/hadoop/data/hdfs/namenode"
+  sudo docker exec -u $user_name -i $master_name sh -c "mkdir -p /usr/local/hadoop/data/hdfs/namenode"
   for num in {1..3}; do
-    cat <<EOF | sudo docker exec -u student -i slv$num sh -c "cat - > /usr/local/hadoop/etc/hadoop/hdfs-site.xml"
+    cat <<EOF | sudo docker exec -u $user_name -i $slave_name$num sh -c "cat - > /usr/local/hadoop/etc/hadoop/hdfs-site.xml"
 <configuration>
   <property>
     <name>dfs.replication</name>
@@ -284,22 +304,22 @@ EOF
   </property>
 </configuration>
 EOF
-  sudo docker exec -u student -i slv$num sh -c "mkdir -p /usr/local/hadoop/data/hdfs/datanode"
+  sudo docker exec -u $user_name -i $slave_name$num sh -c "mkdir -p /usr/local/hadoop/data/hdfs/datanode"
 done
 
   echo 'masters and slaves...'
-  cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/masters"
+  cat <<EOF | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/masters"
 localhost
-mr
+$master_name
 EOF
-  cat <<EOF | sudo docker exec -u student -i mr sh -c "cat - > /usr/local/hadoop/etc/hadoop/slaves"
+  cat <<EOF | sed -e"s/slv/$slave_name/;" | sudo docker exec -u $user_name -i $master_name sh -c "cat - > /usr/local/hadoop/etc/hadoop/slaves"
 slv1
 slv2
 slv3
 EOF
 
   echo 'formatting the hadoop file system, press enter to continue...'; read ta
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/bin/hdfs namenode -format"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/bin/hdfs namenode -format"
 
 
   echo 'restricting the RAM usage...'
@@ -314,26 +334,26 @@ check_cluster()
 start_cluster()
 {
   echo 'starting instances...'
-  sudo docker start mr
+  sudo docker start $master_name
   for num in {1..3}; do
-    sudo docker start slv$num
+    sudo docker start $slave_name$num
   done
   echo 'starting master processes...'
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-dfs.sh"
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/start-yarn.sh"
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver"
-  sudo docker exec -u student -i mr bash -l -c "jps"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/start-dfs.sh"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/start-yarn.sh"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/$master_name-jobhistory-daemon.sh start historyserver"
+  sudo docker exec -u $user_name -i $master_name bash -l -c "jps"
 }
 
 stop_cluster()
 {
   echo 'stoping processes...'
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver"
-  sudo docker exec -u student -i mr bash -c "/usr/local/hadoop-2.7.2/sbin/stop-all.sh"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh stop historyserver"
+  sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop-2.7.2/sbin/stop-all.sh"
   echo 'stoping instances...'
-  sudo docker stop mr
+  sudo docker stop $master_name
   for num in {1..3}; do
-    sudo docker stop slv$num
+    sudo docker stop $slave_name$num
   done
 }
 
@@ -354,9 +374,9 @@ case "$1" in
   uninstall)
     destroy_cluster
     ;;
-install)
+  install)
     #check_internet
-    setup_docker
+    #setup_docker
     setup_hadoop_cluster
     ;;
   retart)
