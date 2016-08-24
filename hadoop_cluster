@@ -37,11 +37,30 @@ get_string()
 	
 }
 
+if [ -x ~/.hadoop_cluster ]; then
+  source ~/.hadoop_cluster
+else
+  ip_prefix="192.168.7"
+  master_name="mr"
+  slave_name="slv"
+  user_name="student"
+fi
 
-ip_prefix=$(get_string "ip_prefix" "192.168.7")
-master_name=$(get_string "master_prefix" "mr")
-slave_name=$(get_string "slave_prefix" "slv")
-user_name=$(get_string "user_name" "student")
+get_env(){
+  ip_prefix=$(get_string "ip_prefix" "$ip_prefix")
+  master_name=$(get_string "master_prefix" "$master_name")
+  slave_name=$(get_string "slave_prefix" "$slave_name")
+  user_name=$(get_string "user_name" "$user_name")
+
+  cat <<EOF >~/.hadoop_cluster
+ip_prefix=$ip_prefix
+master_name=$master_name
+slave_name=$slave_name
+user_name=$user_name
+EOF
+
+  chmod +x ~/.hadoop_cluster
+}
 
 
 check_internet()
@@ -342,7 +361,7 @@ start_cluster()
   sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/start-dfs.sh"
   sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/start-yarn.sh"
   sudo docker exec -u $user_name -i $master_name bash -c "/usr/local/hadoop/sbin/$master_name-jobhistory-daemon.sh start historyserver"
-  sudo docker exec -u $user_name -i $master_name bash -l -c "jps"
+  sudo docker exec -u $user_name -i $master_name bash -l -c "/usr/local/java/bin/jps"
 }
 
 stop_cluster()
@@ -363,6 +382,8 @@ destroy_cluster()
   sudo docker rm $(sudo docker ps -a -q)
   sudo docker network rm hadoop-net
 }
+
+get_env
 
 case "$1" in
   start)
