@@ -13,15 +13,21 @@ distro="ubuntu-wily main"
 thin_img="phusion/baseimage"
 ip_prefix="192.168.7"
 
-hadoop_version=2.7.2
-hadoop_file=hadoop-$hadoop_version.tar.gz
-hadoop_link=http://apache.mirrors.tds.net/hadoop/common/hadoop-$hadoop_version/$hadoop_file
+
 jdk_update=55
 jdk_v=7
 jdk_version="$jdk_v"u"$jdk_update"
 jdk_dir=jdk1."$jdk_v".0_"$jdk_update"
 jdk_file=jdk-$jdk_version-linux-x64.tar.gz
 jdk_link=http://download.oracle.com/otn-pub/java/jdk/$jdk_version-b13/$jdk_file
+
+hadoop_version=2.7.2
+hadoop_file=hadoop-$hadoop_version.tar.gz
+hadoop_link=http://apache.mirrors.tds.net/hadoop/common/hadoop-$hadoop_version/$hadoop_file
+
+spark_version=2.0.0
+spark_file=spark-$spark_version-bin-without-hadoop.tgz
+spark_link=http://apache.is.co.za/spark/spark-$spark_version/$spark_file
 
 
 get_string()
@@ -140,6 +146,8 @@ deploy_hadoop()
 	( sudo docker exec -u $user_name -i $master_name sh -c "echo 'export PATH=\$HADOOP_HOME/bin:\$PATH' >>/home/$user_name/.bashrc" ) && ( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop' >>/home/$user_name/.bashrc" )
 ( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true' >>/home/$user_name/.bashrc" )
 ( sudo docker exec -i $master_name sh -c "echo 'export HADOOP_CLASSPATH=\${JAVA_HOME}/lib/tools.jar' >>/home/$user_name/.bashrc" )
+
+( sudo docker exec -i $master_name sh -c "echo 'export LD_LIBRARY_PATH=\${HADOOP_HOME}/lib/native/:\${LD_LIBRARY_PATH}' >>/home/$user_name/.bashrc" )
 
 }
 
@@ -344,6 +352,15 @@ EOF
   echo 'restricting the RAM usage...'
 }
 
+deploy_spark()
+{
+	(sudo docker exec -i $master_name wget --no-cookies --no-check-certificate $spark_link -O $spark_file) && (	sudo docker exec -i $master_name tar -zxvpf $spark_file -C /usr/local) && ( sudo docker exec -i $master_name rm $spark_file)
+  echo 'press enter to continue...'; read ta
+	( sudo docker exec -i $master_name chown -R $user_name:hadoop /usr/local/$spark_file) && ( 	sudo docker exec -i $master_name chmod -R ug+rw /usr/local/hadoop-$hadoop_version )
+(sudo docker exec -i $master_name  ln -s /usr/local/$spark_file /usr/local/spark )
+#/usr/local/spark-2.0.0-bin-without-hadoop
+}
+
 check_cluster()
 {
 	echo 'verifying docker installation...'
@@ -400,10 +417,13 @@ case "$1" in
     #setup_docker
     setup_hadoop_cluster
     ;;
+  addspark)
+    deploy_spark
+    ;;
   retart)
     stop_cluster
     start_cluster
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart|install|uninstall}"
+    echo "Usage: $0 {start|stop|restart|install|uninstall|addspark|stopspark|startspark}"
 esac
