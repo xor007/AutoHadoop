@@ -25,7 +25,7 @@ hadoop_version=2.7.2
 hadoop_file=hadoop-$hadoop_version.tar.gz
 hadoop_link=http://apache.mirrors.tds.net/hadoop/common/hadoop-$hadoop_version/$hadoop_file
 
-spark_version=2.0.0
+spark_version=1.6.2
 spark_file=spark-$spark_version-bin-without-hadoop.tgz
 spark_link=http://apache.is.co.za/spark/spark-$spark_version/$spark_file
 
