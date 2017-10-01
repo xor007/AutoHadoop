@@ -20,13 +20,13 @@ jdk_dir=jdk1."$jdk_v".0_"$jdk_update"
 jdk_file=jdk-$jdk_version-linux-x64.tar.gz
 jdk_link=http://download.oracle.com/otn-pub/java/jdk/$jdk_version-b15/336fa29ff2bb4ef291e347e091f7f4a7/$jdk_file
 
-hadoop_version=2.7.2
+hadoop_version=2.7.3
 hadoop_file=hadoop-$hadoop_version.tar.gz
-hadoop_link=http://apache.mirrors.tds.net/hadoop/common/hadoop-$hadoop_version/$hadoop_file
+hadoop_link=https://archive.apache.org/dist/hadoop/core/hadoop-$hadoop_version/$hadoop_file
 
-spark_version=1.6.2
+spark_version=2.1.0
 spark_file=spark-$spark_version-bin-without-hadoop.tgz
-spark_link=http://apache.is.co.za/spark/spark-$spark_version/$spark_file
+spark_link=https://archive.apache.org/dist/spark/spark-$spark_version/$spark_file
 
 
 get_string()
