@@ -369,7 +369,7 @@ deploy_spark()
 	(sudo docker exec -i $master_name wget --no-cookies --no-check-certificate $spark_link -O $spark_file) && (	sudo docker exec -i $master_name tar -zxvpf $spark_file -C /usr/local) && ( sudo docker exec -i $master_name rm $spark_file)
   echo 'press enter to continue...'; read ta
 	( sudo docker exec -i $master_name chown -R $user_name:hadoop /usr/local/$spark_file) && ( 	sudo docker exec -i $master_name chmod -R ug+rw /usr/local/hadoop-$hadoop_version )
-  (sudo docker exec -i $master_name  ln -s /usr/local/$spark_file /usr/local/spark )
+  (sudo docker exec -i $master_name  ln -s /usr/local/spark-$spark_version-bin-without-hadoop /usr/local/spark )
 
   cat <<EOF | sudo docker exec -u $user_name -i $master_name  sh -c "cat - >> /usr/local/spark/conf/spark-env.sh"
 export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop
