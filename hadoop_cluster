@@ -13,13 +13,12 @@ distro="ubuntu-wily main"
 thin_img="phusion/baseimage"
 ip_prefix="192.168.7"
 
-
-jdk_update=55
-jdk_v=7
+jdk_update=141
+jdk_v=8
 jdk_version="$jdk_v"u"$jdk_update"
 jdk_dir=jdk1."$jdk_v".0_"$jdk_update"
 jdk_file=jdk-$jdk_version-linux-x64.tar.gz
-jdk_link=http://download.oracle.com/otn-pub/java/jdk/$jdk_version-b13/$jdk_file
+jdk_link=http://download.oracle.com/otn-pub/java/jdk/$jdk_version-b15/336fa29ff2bb4ef291e347e091f7f4a7/$jdk_file
 
 hadoop_version=2.7.2
 hadoop_file=hadoop-$hadoop_version.tar.gz
