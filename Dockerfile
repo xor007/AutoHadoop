@@ -40,8 +40,8 @@ RUN yum install -y ambari-server
 RUN curl -o /usr/bin/jq http://stedolan.github.io/jq/download/linux64/jq && chmod +x /usr/bin/jq
 
 # install Ambari specified 1.8 jdk
+RUN mkdir -p /opt/java/ && ls -l /opt
 ENV JDK_VERSION jdk1.8.0_152
-RUN mkdir -p /opt/java
 ADD /opt/java/$JDK_VERSION /opt/java/jdk1.8
 RUN ls -l /etc/yum.conf /opt/java/jdk1.8
 
@@ -56,7 +56,7 @@ RUN chmod 600 /root/.ssh/authorized_keys /root/.ssh/id_rsa*
 
 #RUN ambari-server setup -j $JAVA_HOME -s
 
-RUN chkconfig ntpd on; service ntpd start
+#RUN chkconfig ntpd on; service ntpd start
 
 #RUN timedatectl set-timezone Africa/Johannesburg 
 
