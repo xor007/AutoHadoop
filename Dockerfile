@@ -3,6 +3,8 @@ MAINTAINER F5061881
 
 #!!!!!! add epel repos and switch on proxy
 ADD etc/yum.repos.d/ambari.repo /etc/yum.repos.d/ambari.repo
+ADD etc/yum.repos.d/hdp.repo /etc/yum.repos.d/hdp.repo
+ADD etc/yum.repos.d/hdf.repo /etc/yum.repos.d/hdf.repo
 
 RUN yum update -y && yum clean all
 
